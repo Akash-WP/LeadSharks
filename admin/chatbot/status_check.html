@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ChatBot Status Check</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 ChatBot Frontend Status Check</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Can you see the SQL generation response?</h3>
+        <button onclick="testSqlGeneration()">Test SQL Generation</button>
+        <div id="sqlResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: Can you execute queries?</h3>
+        <button onclick="testQueryExecution()">Test Query Execution</button>
+        <div id="executeResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: Full chatbot flow</h3>
+        <button onclick="testFullFlow()">Test Full Flow</button>
+        <div id="fullResult"></div>
+    </div>
+
+    <script>
+        async function testSqlGeneration() {
+            const resultDiv = document.getElementById('sqlResult');
+            resultDiv.innerHTML = '<p class="info">Testing SQL generation...</p>';
+            
+            try {
+                const response = await fetch('api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'generate_sql',
+                        prompt: 'Show won leads with company names'
+                    })
+                });
+                
+                const responseText = await response.text();
+                
+                try {
+                    const data = JSON.parse(responseText);
+                    if (data.success) {
+                        resultDiv.innerHTML = `
+                            <p class="success">✅ SQL Generation Working!</p>
+                            <p><strong>Generated SQL:</strong></p>
+                            <pre>${data.sql}</pre>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <p class="error">❌ SQL Generation Failed</p>
+                            <p><strong>Error:</strong> ${data.error}</p>
+                        `;
+                    }
+                } catch (parseError) {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ JSON Parse Error: ${parseError.message}</p>
+                        <p><strong>Raw Response:</strong></p>
+                        <pre>${responseText}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Network Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testQueryExecution() {
+            const resultDiv = document.getElementById('executeResult');
+            resultDiv.innerHTML = '<p class="info">Testing query execution...</p>';
+            
+            try {
+                const response = await fetch('api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'execute_query',
+                        query: 'SELECT COUNT(*) as total_leads FROM lead_list;',
+                        question: 'How many leads do we have?'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Query Execution Working!</p>
+                        <p><strong>Result:</strong></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Query Execution Failed</p>
+                        <p><strong>Error:</strong> ${data.error}</p>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testFullFlow() {
+            const resultDiv = document.getElementById('fullResult');
+            resultDiv.innerHTML = '<p class="info">Testing full chatbot flow...</p>';
+            
+            try {
+                // Step 1: Generate SQL
+                const sqlResponse = await fetch('api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'generate_sql',
+                        prompt: 'How many leads are assigned to John?'
+                    })
+                });
+                
+                const sqlData = await sqlResponse.json();
+                
+                if (!sqlData.success) {
+                    throw new Error('SQL generation failed: ' + sqlData.error);
+                }
+                
+                // Step 2: Execute query
+                const executeResponse = await fetch('api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'execute_query',
+                        query: sqlData.sql,
+                        question: 'How many leads are assigned to John?'
+                    })
+                });
+                
+                const executeData = await executeResponse.json();
+                
+                if (executeData.success) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Full Flow Working!</p>
+                        <p><strong>Generated SQL:</strong></p>
+                        <pre>${sqlData.sql}</pre>
+                        <p><strong>Results:</strong></p>
+                        <pre>${JSON.stringify(executeData, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Query execution failed: ${executeData.error}</p>
+                        <p><strong>Generated SQL was:</strong></p>
+                        <pre>${sqlData.sql}</pre>
+                    `;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Full Flow Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+# Global owners - these users will be requested for review on all PRs
+* @YourUsername @WoodpeckerLLM
+
+# Database and schema changes require special attention
+/database/ @YourUsername
+*.sql @YourUsername
+
+# Core configuration files require owner review
+/config.php @YourUsername
+/initialize.php @YourUsername
+/composer.json @YourUsername
+
+# Security-critical files require owner review
+/classes/Login.php @YourUsername
+/admin/login.php @YourUsername
+/classes/Users.php @YourUsername
+/admin/user/ @YourUsername
+
+# Core business logic requires review from both maintainers
+/classes/Master.php @YourUsername @WoodpeckerLLM
+/classes/DBConnection.php @YourUsername @WoodpeckerLLM
+
+# Admin panel changes require careful review
+/admin/home.php @YourUsername @WoodpeckerLLM
+/admin/dashboard*.php @YourUsername @WoodpeckerLLM
+
+# Documentation requires review from team leads
+/docs/ @YourUsername @WoodpeckerLLM
+README.md @YourUsername @WoodpeckerLLM
+CONTRIBUTING.md @YourUsername @WoodpeckerLLM
+SECURITY.md @YourUsername
+
+# CI/CD and GitHub configuration
+/.github/ @YourUsername
+/scripts/ @YourUsername
+
+# Lead and client management - core features
+/admin/leads/ @YourUsername @WoodpeckerLLM
+/admin/clients/ @YourUsername @WoodpeckerLLM
+
+# Import/export functionality
+/admin/bulk_upload.php @YourUsername @WoodpeckerLLM
+/admin/excel/ @YourUsername @WoodpeckerLLM
+
+# Notification and alert systems
+/admin/morning_alert.php @YourUsername @WoodpeckerLLM
+/admin/evening_alert.php @YourUsername @WoodpeckerLLM
+
+# System settings and configuration
+/admin/system_info/ @YourUsername
+/classes/SystemSettings.php @YourUsername
+
+# Frontend assets and styling
+/assets/ @WoodpeckerLLM
+/libs/ @WoodpeckerLLM
+/plugins/ @WoodpeckerLLM

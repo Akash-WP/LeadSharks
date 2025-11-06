@@ -1,0 +1,255 @@
+# LeadSharks LMS - Git Ignore File
+
+# Sensitive Configuration Files
+config.php
+initialize.php
+.env
+.env.*
+!.env.example
+
+# Database Credentials and Backups
+*.sql.backup
+*.sql.bak
+database_backup/
+db_dumps/
+
+# Logs
+*.log
+logs/
+temp/*.log
+admin/logs/
+error_log
+
+# Temporary Files
+temp/
+tmp/
+cache/
+*.tmp
+*.temp
+*.cache
+
+# User Uploads (consider if you want to track these)
+uploads/*.pdf
+uploads/*.doc
+uploads/*.docx
+uploads/*.xls
+uploads/*.xlsx
+uploads/*.zip
+uploads/*.rar
+# Keep the directory structure
+!uploads/.gitkeep
+
+# Vendor Dependencies
+/vendor/
+node_modules/
+
+# Composer
+composer.phar
+composer.lock
+
+# Package Managers
+package-lock.json
+yarn.lock
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.buildpath
+.settings/
+.metadata/
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+desktop.ini
+$RECYCLE.BIN/
+
+# Backup Files
+*.bak
+*.backup
+*.old
+*~
+
+# Development Tools
+.phpunit.result.cache
+.phpcs-cache
+.php_cs.cache
+coverage/
+.nyc_output/
+
+# Build Output
+build/
+dist/
+out/
+
+# Test Files
+phpunit.xml
+.phpunit.xml
+phpunit.local.xml
+
+# Security Keys
+*.pem
+*.key
+*.cert
+*.csr
+private/
+keys/
+
+# Session Files
+sessions/
+sess_*
+
+# Email Templates (if sensitive)
+# email_templates/
+
+# Reports and Exports
+reports/*.pdf
+reports/*.csv
+reports/*.xlsx
+exports/
+
+# Development Database
+dev.db
+test.db
+*.sqlite
+*.sqlite3
+
+# Error Pages with Sensitive Info
+debug/
+debug_info/
+
+# Configuration Backups
+config.backup.php
+initialize.backup.php
+
+# Local Development
+local/
+local_config/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Vagrant
+.vagrant/
+
+# Python (if any Python scripts are used)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Ruby (if any Ruby scripts are used)
+*.gem
+*.rbc
+/.config
+/coverage/
+/InstalledFiles
+/pkg/
+/spec/reports/
+/spec/examples.txt
+/test/tmp/
+/test/version_tmp/
+/tmp/
+
+# Java (if any Java components)
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Archives
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# nyc test coverage
+.nyc_output/
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file (already covered above)
+.env
+
+# Serverless directories
+.serverless
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Custom application directories that might contain sensitive data
+private_documents/
+confidential/
+internal/
+
+# Development and testing artifacts
+test_uploads/
+dev_files/
+sandbox/
+
+# Keep important directory structure
+!assets/.gitkeep
+!temp/.gitkeep
+!uploads/.gitkeep
+!logs/.gitkeep

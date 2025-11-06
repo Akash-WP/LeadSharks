@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ChatBot Logger Dashboard</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        .header {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .controls {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .log-container {
+            background: #000;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 15px;
+            height: 600px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .log-DEBUG { color: #888; }
+        .log-INFO { color: #00ff00; }
+        .log-WARNING { color: #ffaa00; }
+        .log-ERROR { color: #ff4444; }
+        .log-CRITICAL { 
+            color: #fff; 
+            background: #ff0000;
+            font-weight: bold;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff00;
+        }
+        .button {
+            background: #444;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .button:hover {
+            background: #555;
+        }
+        .auto-refresh {
+            color: #ffaa00;
+        }
+        .search-box {
+            width: 300px;
+            background: #444;
+            border: 1px solid #666;
+            color: #fff;
+            padding: 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 ChatBot Logger Dashboard</h1>
+        <p>Real-time monitoring and debugging</p>
+    </div>
+
+    <div class="stats" id="stats">
+        <!-- Stats will be populated by JavaScript -->
+    </div>
+
+    <div class="controls">
+        <button class="button" onclick="refreshLogs()">🔄 Refresh</button>
+        <button class="button" onclick="clearLogs()">🗑️ Clear Logs</button>
+        <button class="button" onclick="toggleAutoRefresh()" id="autoRefreshBtn">⏰ Auto Refresh: OFF</button>
+        <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search logs..." onkeyup="filterLogs()">
+        
+        <select class="button" id="levelFilter" onchange="filterLogs()">
+            <option value="">All Levels</option>
+            <option value="DEBUG">DEBUG</option>
+            <option value="INFO">INFO</option>
+            <option value="WARNING">WARNING</option>
+            <option value="ERROR">ERROR</option>
+            <option value="CRITICAL">CRITICAL</option>
+        </select>
+    </div>
+
+    <div class="log-container" id="logContainer">
+        <div style="text-align: center; color: #888;">Loading logs...</div>
+    </div>
+
+    <script>
+        let autoRefreshInterval = null;
+        let allLogs = [];
+
+        async function refreshLogs() {
+            try {
+                const response = await fetch('logger_viewer.php');
+                const data = await response.json();
+                
+                if (data.success) {
+                    allLogs = data.logs;
+                    updateStats(data.stats);
+                    displayLogs(allLogs);
+                } else {
+                    document.getElementById('logContainer').innerHTML = 
+                        '<div style="color: #ff4444;">Error loading logs: ' + data.error + '</div>';
+                }
+            } catch (error) {
+                document.getElementById('logContainer').innerHTML = 
+                    '<div style="color: #ff4444;">Network error: ' + error.message + '</div>';
+            }
+        }
+
+        function updateStats(stats) {
+            const statsContainer = document.getElementById('stats');
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.total}</div>
+                    <div>Total Logs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: #ff4444;">${stats.errors}</div>
+                    <div>Errors</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: #ffaa00;">${stats.warnings}</div>
+                    <div>Warnings</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: #00ff00;">${stats.api_requests}</div>
+                    <div>API Requests</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: #00aaff;">${stats.sql_queries}</div>
+                    <div>SQL Queries</div>
+                </div>
+            `;
+        }
+
+        function displayLogs(logs) {
+            const container = document.getElementById('logContainer');
+            if (logs.length === 0) {
+                container.innerHTML = '<div style="color: #888; text-align: center;">No logs found</div>';
+                return;
+            }
+
+            const html = logs.map(log => {
+                const level = extractLogLevel(log);
+                const timestamp = extractTimestamp(log);
+                const message = log.replace(/^\[.*?\]/, '').trim();
+                
+                return `<div class="log-entry log-${level}" data-full="${log}">
+                    <span style="color: #666;">[${timestamp}]</span> 
+                    <span style="font-weight: bold;">${level}</span> 
+                    ${highlightLogContent(message)}
+                </div>`;
+            }).join('');
+
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function extractLogLevel(log) {
+            const match = log.match(/\] (\w+) \[/);
+            return match ? match[1] : 'INFO';
+        }
+
+        function extractTimestamp(log) {
+            const match = log.match(/^\[([\d\-: .]+)\]/);
+            return match ? match[1].substring(11, 19) : '';
+        }
+
+        function highlightLogContent(content) {
+            // Highlight JSON
+            content = content.replace(/(\{[^}]*\})/g, '<span style="color: #66ccff;">$1</span>');
+            
+            // Highlight SQL keywords
+            content = content.replace(/\b(SELECT|FROM|WHERE|JOIN|LEFT|RIGHT|INNER|AS)\b/gi, 
+                '<span style="color: #ff66cc; font-weight: bold;">$1</span>');
+            
+            // Highlight function names
+            content = content.replace(/(\w+)\(/g, '<span style="color: #ffff66;">$1</span>(');
+            
+            return content;
+        }
+
+        function filterLogs() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            const levelFilter = document.getElementById('levelFilter').value;
+            
+            let filteredLogs = allLogs;
+            
+            if (searchTerm) {
+                filteredLogs = filteredLogs.filter(log => 
+                    log.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if (levelFilter) {
+                filteredLogs = filteredLogs.filter(log => 
+                    log.includes(`] ${levelFilter} [`)
+                );
+            }
+            
+            displayLogs(filteredLogs);
+        }
+
+        function toggleAutoRefresh() {
+            const btn = document.getElementById('autoRefreshBtn');
+            
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                btn.textContent = '⏰ Auto Refresh: OFF';
+                btn.style.color = '#fff';
+            } else {
+                autoRefreshInterval = setInterval(refreshLogs, 3000);
+                btn.textContent = '⏰ Auto Refresh: ON';
+                btn.style.color = '#ffaa00';
+            }
+        }
+
+        async function clearLogs() {
+            if (confirm('Clear all logs? This action cannot be undone.')) {
+                try {
+                    const response = await fetch('logger_viewer.php?action=clear', {method: 'POST'});
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        refreshLogs();
+                    } else {
+                        alert('Error clearing logs: ' + data.error);
+                    }
+                } catch (error) {
+                    alert('Network error: ' + error.message);
+                }
+            }
+        }
+
+        // Initialize
+        refreshLogs();
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                refreshLogs();
+            }
+        });
+    </script>
+</body>
+</html>

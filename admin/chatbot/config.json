@@ -1,0 +1,17 @@
+{
+    "database": {
+        "host": "localhost",
+        "username": "root",
+        "password": "",
+        "database": "lms_db",
+        "charset": "utf8mb4"
+    },
+    "cache": {
+        "schema_cache_file": "cache/schema_cache.json",
+        "cache_refresh_hours": 24
+    },
+    "ollama": {
+        "url": "http://127.0.0.1:11434/api/chat",
+        "model": "deepseek-coder"
+    }
+}

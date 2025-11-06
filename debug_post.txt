@@ -1,0 +1,13 @@
+Array
+(
+    [id] => 
+    [lead_id] => 2219
+    [log_type] => 1
+    [call_outcome] => 2
+    [conversation_outcome] => 
+    [reason_not_interested] => 
+    [attempt_result] => 5
+    [follow_up_date] => 
+    [remarks] => invalid
+    [lead_status] => 7
+)

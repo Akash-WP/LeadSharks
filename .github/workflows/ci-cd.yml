@@ -1,0 +1,401 @@
+name: LeadSharks LMS CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PHP_VERSION: '8.1'
+  NODE_VERSION: '18'
+
+jobs:
+  # Code Quality and Security Checks
+  code-quality:
+    name: Code Quality & Security
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ env.PHP_VERSION }}
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, dom, filter, gd, json, zip
+        coverage: xdebug
+        
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+          
+    - name: Install Composer dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest --dev
+      
+    - name: PHP Syntax Check
+      run: find . -name "*.php" -not -path "./vendor/*" -exec php -l {} \;
+      
+    - name: Code Style Check (PSR-12)
+      run: |
+        composer require --dev squizlabs/php_codesniffer
+        ./vendor/bin/phpcs --standard=PSR12 --ignore=vendor/,node_modules/ --extensions=php .
+        
+    - name: Static Analysis with PHPStan
+      run: |
+        composer require --dev phpstan/phpstan
+        ./vendor/bin/phpstan analyse --level=5 classes/ admin/ --no-progress
+        
+    - name: Security Check
+      run: |
+        composer require --dev sensiolabs/security-checker
+        ./vendor/bin/security-checker security:check composer.lock
+        
+    - name: Check for TODO/FIXME comments
+      run: |
+        if grep -r -i --include="*.php" --exclude-dir=vendor "TODO\|FIXME" .; then
+          echo "Warning: TODO/FIXME comments found"
+          exit 1
+        fi
+
+  # Unit and Integration Tests
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test_password
+          MYSQL_DATABASE: lms_test_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ env.PHP_VERSION }}
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, dom, filter, gd, json, zip
+        coverage: xdebug
+        
+    - name: Install Composer dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest --dev
+      
+    - name: Setup test database
+      run: |
+        mysql -h 127.0.0.1 -P 3306 -u root -ptest_password lms_test_db < database/lms_db.sql
+        
+    - name: Create test configuration
+      run: |
+        cp initialize.php initialize.test.php
+        sed -i 's/DB_PASSWORD", ".*"/DB_PASSWORD", "test_password"/g' initialize.test.php
+        sed -i 's/DB_NAME", ".*"/DB_NAME", "lms_test_db"/g' initialize.test.php
+        
+    - name: Run PHPUnit Tests
+      run: |
+        if [ -f phpunit.xml ]; then
+          ./vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+        else
+          echo "No PHPUnit configuration found, skipping tests"
+        fi
+        
+    - name: Upload coverage to Codecov
+      if: success()
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # Frontend Build and Test
+  frontend:
+    name: Frontend Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        if [ -f package.json ]; then
+          npm ci
+        else
+          echo "No package.json found, skipping npm install"
+        fi
+        
+    - name: Run JavaScript linting
+      run: |
+        if [ -f package.json ] && grep -q "eslint" package.json; then
+          npm run lint
+        else
+          echo "No ESLint configuration found, skipping linting"
+        fi
+        
+    - name: Build frontend assets
+      run: |
+        if [ -f package.json ] && grep -q "build" package.json; then
+          npm run build
+        else
+          echo "No build script found, skipping build"
+        fi
+        
+    - name: Run frontend tests
+      run: |
+        if [ -f package.json ] && grep -q "test" package.json; then
+          npm test
+        else
+          echo "No frontend tests found, skipping"
+        fi
+
+  # Security Scanning
+  security:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # Database Migration Test
+  database:
+    name: Database Migration Test
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test_password
+          MYSQL_DATABASE: lms_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Test database schema import
+      run: |
+        mysql -h 127.0.0.1 -P 3306 -u root -ptest_password lms_db < database/lms_db.sql
+        
+    - name: Verify database structure
+      run: |
+        mysql -h 127.0.0.1 -P 3306 -u root -ptest_password -e "USE lms_db; SHOW TABLES;"
+        mysql -h 127.0.0.1 -P 3306 -u root -ptest_password -e "USE lms_db; SELECT COUNT(*) as table_count FROM information_schema.tables WHERE table_schema = 'lms_db';"
+
+  # Performance Testing
+  performance:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    needs: [test, frontend]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ env.PHP_VERSION }}
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, dom, filter, gd, json, zip
+        
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress --no-dev
+      
+    - name: Performance baseline test
+      run: |
+        echo "Running performance baseline tests..."
+        # Add performance testing scripts here
+        # Example: ab -n 1000 -c 10 http://localhost/
+        
+  # Build and Package
+  build:
+    name: Build & Package
+    runs-on: ubuntu-latest
+    needs: [test, frontend, database, security]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ env.PHP_VERSION }}
+        
+    - name: Install production dependencies
+      run: composer install --prefer-dist --no-progress --no-dev --optimize-autoloader
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        
+    - name: Build frontend assets for production
+      run: |
+        if [ -f package.json ]; then
+          npm ci
+          if grep -q "build:prod" package.json; then
+            npm run build:prod
+          elif grep -q "build" package.json; then
+            npm run build
+          fi
+        fi
+        
+    - name: Create deployment package
+      run: |
+        # Remove development files
+        rm -rf .git .github tests node_modules
+        rm -f .gitignore phpunit.xml package*.json
+        
+        # Create deployment archive
+        tar -czf leadshark-lms-${{ github.sha }}.tar.gz .
+        
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: leadshark-lms-${{ github.sha }}
+        path: leadshark-lms-${{ github.sha }}.tar.gz
+        retention-days: 30
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Download build artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: leadshark-lms-${{ github.sha }}
+        
+    - name: Deploy to staging server
+      env:
+        STAGING_HOST: ${{ secrets.STAGING_HOST }}
+        STAGING_USER: ${{ secrets.STAGING_USER }}
+        STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+      run: |
+        echo "Deploying to staging environment..."
+        # Add deployment script here
+        # ssh -i key user@host 'deployment commands'
+        
+    - name: Run post-deployment tests
+      run: |
+        echo "Running post-deployment verification..."
+        # Add health check scripts here
+        # curl -f https://staging.example.com/health-check
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Download build artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: leadshark-lms-${{ github.sha }}
+        
+    - name: Deploy to production server
+      env:
+        PROD_HOST: ${{ secrets.PROD_HOST }}
+        PROD_USER: ${{ secrets.PROD_USER }}
+        PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+      run: |
+        echo "Deploying to production environment..."
+        # Add production deployment script here
+        
+    - name: Run post-deployment verification
+      run: |
+        echo "Running production verification..."
+        # Add production health checks here
+        
+    - name: Create GitHub release
+      if: success()
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        body: |
+          Automated release from commit ${{ github.sha }}
+          
+          ## Changes
+          ${{ github.event.head_commit.message }}
+          
+        draft: false
+        prerelease: false
+
+  # Notification
+  notify:
+    name: Notify Team
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+    - name: Notify on success
+      if: ${{ needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success' }}
+      run: |
+        echo "Deployment successful! Notifying team..."
+        # Add notification logic (Slack, email, etc.)
+        
+    - name: Notify on failure
+      if: ${{ needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure' }}
+      run: |
+        echo "Deployment failed! Notifying team..."
+        # Add failure notification logic
