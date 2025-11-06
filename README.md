@@ -51,6 +51,7 @@ LeadSharks LMS is a comprehensive Lead Management System designed to streamline 
 - 💬 **Internal Messaging** - Team communication system
 - 🎯 **Lead Scoring** - Automated lead qualification and prioritization
 - 📅 **Calendar Integration** - Schedule and track follow-up activities
+- 🤖 **AI-Powered SQL Chatbot** - Natural language database queries with Ollama/DeepSeek integration
 
 ## 🛠 Technology Stack
 
@@ -72,6 +73,11 @@ LeadSharks LMS is a comprehensive Lead Management System designed to streamline 
 - **PHPMailer** - Email functionality
 - **AdminLTE** - Admin dashboard template
 - **Chart.js** - Data visualization
+
+### AI Integration
+- **Ollama** - Local LLM server for AI chatbot
+- **DeepSeek-Coder** - Code-optimized language model for SQL generation
+- **Natural Language Processing** - Convert user queries to SQL commands
 
 ### Development Tools
 - **Git** - Version control
@@ -184,6 +190,48 @@ define('base_url', 'https://yourdomain.com/lms/');
 ### Email Configuration
 Configure SMTP settings in the admin panel or directly in the configuration files for email notifications.
 
+### AI Chatbot Configuration
+The LeadSharks LMS includes an AI-powered SQL chatbot that allows users to query the database using natural language.
+
+#### Prerequisites
+1. **Install Ollama** - Download from [ollama.com](https://ollama.com)
+2. **Pull DeepSeek-Coder model**:
+   ```bash
+   ollama pull deepseek-coder
+   ```
+
+#### Chatbot Setup
+Edit `admin/chatbot/config.json`:
+
+```json
+{
+    "database": {
+        "host": "localhost",
+        "username": "root",
+        "password": "",
+        "database": "lms_db"
+    },
+    "ollama": {
+        "url": "http://127.0.0.1:11434/api/chat",
+        "model": "deepseek-coder"
+    }
+}
+```
+
+#### Features
+- 🗣️ **Natural Language Queries** - Ask questions in plain English
+- 🔍 **Intelligent SQL Generation** - AI converts questions to SQL
+- 📊 **Real-time Results** - Instant database query execution
+- 🛡️ **Safe Execution** - Read-only queries with built-in safety checks
+- 📝 **Query Logging** - Full audit trail of all AI interactions
+- 💡 **Smart Suggestions** - Context-aware query recommendations
+
+#### Example Queries
+- "Show me all leads from this month"
+- "How many won deals do we have by user?"
+- "What's the average lead conversion time?"
+- "List all high-priority prospects"
+
 ### Environment Variables
 Create a `.env` file for sensitive configuration:
 
@@ -210,6 +258,7 @@ SMTP_PASS=your_smtp_password
 2. **Follow-ups**: Use the dashboard to track pending follow-ups
 3. **Status Updates**: Update lead status as they progress through the pipeline
 4. **Reporting**: Generate reports to analyze performance
+5. **AI Chatbot**: Use natural language queries to explore data and generate insights
 
 ### Team Management
 1. **User Roles**: Assign appropriate roles to team members
@@ -233,6 +282,12 @@ lms/
 │   ├── 📁 leads/               # Lead management
 │   ├── 📁 clients/             # Client management
 │   ├── 📁 user/                # User management
+│   ├── 📁 chatbot/             # AI-powered SQL chatbot
+│   │   ├── 📄 chatbot.php      # Chatbot interface
+│   │   ├── 📄 api.php          # API endpoints
+│   │   ├── 📄 llm_generator.php # LLM integration
+│   │   ├── 📄 config.json      # Chatbot configuration
+│   │   └── 📁 logs/            # Query logs and debugging
 │   └── 📁 inc/                 # Admin includes
 │
 ├── 📁 classes/                 # PHP Classes
