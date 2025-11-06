@@ -412,7 +412,7 @@ GET  /admin/excel/export_leads.php # Export leads to Excel
 5. Monitor for suspicious activities
 
 ### Reporting Security Issues
-Please report security vulnerabilities privately to [security@yourcompany.com](mailto:security@yourcompany.com)
+Please report security vulnerabilities privately to [akashhugar2015@gmail.com](mailto:akashhugar2015@gmail.com)
 
 ## 🐛 Troubleshooting
 
@@ -473,9 +473,9 @@ This project is proprietary software. All rights reserved.
 - **Code Review**: Request help during PR reviews
 
 ### Contact Information
-- **Project Lead**: [Your Email]
-- **Technical Lead**: [Tech Lead Email]
-- **Team Communication**: [Team Slack/Discord/etc.]
+- **Project Lead**: akashhugar2015@gmail.com
+- **Technical Lead**: Woodpecker
+- **Team Communication**: GitHub Issues & Pull Requests
 
 ### Response Times
 - **Critical Issues**: 4 hours

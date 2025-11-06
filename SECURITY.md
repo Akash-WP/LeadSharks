@@ -19,7 +19,7 @@ We take the security of LeadSharks LMS seriously. If you believe you have found 
 
 **Please do NOT report security vulnerabilities through public GitHub issues.**
 
-Instead, please send an email to [security@yourcompany.com](mailto:security@yourcompany.com) with the following information:
+Instead, please send an email to [akashhugar2015@gmail.com](mailto:akashhugar2015@gmail.com) with the following information:
 
 - **Subject Line**: "SECURITY: [Brief description of vulnerability]"
 - **Vulnerability Type**: (e.g., SQL Injection, XSS, Authentication Bypass)
@@ -322,9 +322,9 @@ mv "$CHECKSUM_FILE.new" "$CHECKSUM_FILE"
 ### Contact Information
 
 #### Security Team
-- **Primary Contact**: security@yourcompany.com
-- **Emergency Contact**: +1-XXX-XXX-XXXX
-- **PGP Key**: Available at https://keyserver.pgp.com/
+- **Primary Contact**: akashhugar2015@gmail.com
+- **Project Lead**: Akash Hugar (akashhugar2015@gmail.com)
+- **Technical Lead**: WoodpeckerLLM
 
 #### Escalation Chain
 1. **Security Team Lead**
