@@ -15,7 +15,6 @@
 - [Usage](#usage)
 - [Project Structure](#project-structure)
 - [Development Workflow](#development-workflow)
-- [Team Collaboration](#team-collaboration)
 - [API Documentation](#api-documentation)
 - [Contributing](#contributing)
 - [Security](#security)
@@ -31,7 +30,6 @@ LeadSharks LMS is a comprehensive Lead Management System designed to streamline 
 - **Lead Tracking**: Monitor leads throughout the sales funnel
 - **Client Management**: Maintain detailed client profiles and interaction history
 - **Analytics & Reporting**: Generate insights on lead performance and conversion rates
-- **Team Collaboration**: Enable multiple team members to work on leads efficiently
 - **Automated Alerts**: Receive notifications for follow-ups and important updates
 
 ## ✨ Features
@@ -325,34 +323,7 @@ We follow [Conventional Commits](https://conventionalcommits.org/):
 3. Automated tests must pass
 4. Code must follow established conventions
 
-## 👥 Team Collaboration
-
-### Team Members
-- **Project Owner**: [Your Name]
-- **Developer**: WoodpeckerLLM
-- **Additional team members as needed**
-
-### Access Levels
-- **Admin**: Full access to all features and settings
-- **Manager**: Lead management and reporting access
-- **Agent**: Lead entry and basic management
-- **Viewer**: Read-only access to assigned leads
-
-### Communication
-- **GitHub Issues**: Bug reports and feature requests
-- **Pull Request Reviews**: Code discussions
-- **Project Wiki**: Additional documentation
-- **Team Meetings**: Regular sync meetings
-
-### Collaboration Guidelines
-1. Always work on feature branches
-2. Keep commits atomic and well-described
-3. Update documentation with code changes
-4. Test thoroughly before submitting PR
-5. Respond to PR feedback promptly
-6. Help review teammates' code
-
-## 📚 API Documentation
+##  API Documentation
 
 ### Authentication Endpoints
 ```php
@@ -520,7 +491,6 @@ This project is proprietary software. All rights reserved.
 - Complete LMS functionality
 - Modern responsive design
 - Advanced reporting features
-- Team collaboration tools
 
 ### Roadmap
 - [ ] API endpoint expansion
